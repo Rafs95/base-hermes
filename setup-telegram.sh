@@ -75,9 +75,11 @@ read -r -p "1. Enter Telegram Bot Token (from @BotFather): " bot_token
 read -r -p "2. Enter Allowed Telegram User ID(s) (comma-separated list): " allowed_users
 read -r -p "3. Enter Telegram Group Chat ID (e.g., -100xxxxxxxxxx): " group_id
 read -r -p "4. Enter display name for this channel/topic (e.g., UrVets-API): " channel_name
+read -r -p "5. Enter API Server Port for this profile (press Enter for default 8642): " api_port
+api_port="${api_port:-8642}"
 
 # Forum Topics Configuration
-read -r -p "5. Does this Telegram group use Topics/Forum threads? [y/N]: " use_topics
+read -r -p "6. Does this Telegram group use Topics/Forum threads? [y/N]: " use_topics
 use_topics="${use_topics:-n}"
 
 thread_id=""
@@ -117,6 +119,7 @@ update_env_var "TELEGRAM_HOME_CHANNEL_NAME" "$channel_name"
 update_env_var "TELEGRAM_HOME_CHANNEL_THREAD_ID" "$thread_id"
 update_env_var "TELEGRAM_CRON_THREAD_ID" "$thread_id"
 update_env_var "TELEGRAM_ALLOWED_TOPICS" "$allowed_topics"
+update_env_var "API_SERVER_PORT" "$api_port"
 
 # Detect container name for display suggestion
 CONTAINER_NAME=""
@@ -129,7 +132,11 @@ fi
 echo_success "Telegram configuration updated successfully for profile '$profile_name'!"
 echo "Please restart your gateway service to apply the new settings:"
 if [ -n "$CONTAINER_NAME" ]; then
-  echo "  docker exec $CONTAINER_NAME /command/s6-svc -t /run/service/gateway-default"
+  if [ "$profile_name" = "default" ]; then
+    echo "  docker exec $CONTAINER_NAME /command/s6-svc -t /run/service/gateway-default"
+  else
+    echo "  docker exec $CONTAINER_NAME /command/s6-svc -t /run/service/gateway-$profile_name"
+  fi
 else
   echo "  hermes -p $profile_name gateway restart"
 fi

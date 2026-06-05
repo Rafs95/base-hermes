@@ -94,9 +94,21 @@ else
   echo "⚠️ Warning: skills.md / SKILLS.json not found, skipping skill installations."
 fi
 
+# 6. Reconcile s6 services and start gateway
+echo "🔄 Registering supervised gateway-$PROFILE_NAME service..."
+docker exec -i "$CONTAINER_NAME" python3 -m hermes_cli.container_boot
+docker exec -i "$CONTAINER_NAME" /command/s6-svscanctl -a /run/service
+
+# Give s6-svscan a moment to spawn the supervisor and open control FIFOs
+sleep 2
+
+echo "🚀 Starting gateway-$PROFILE_NAME service..."
+docker exec -i "$CONTAINER_NAME" /command/s6-svc -u "/run/service/gateway-$PROFILE_NAME"
+
 echo "======================================================================"
-echo "✅ Profile '$PROFILE_NAME' installed successfully!"
+echo "✅ Profile '$PROFILE_NAME' installed and started successfully!"
 echo "======================================================================"
-echo "To switch to this profile in the CLI, run:"
-echo "  docker exec -it $CONTAINER_NAME hermes profile use $PROFILE_NAME"
+echo "To manage this service, use:"
+echo "  docker exec $CONTAINER_NAME /command/s6-svc -t /run/service/gateway-$PROFILE_NAME (restart)"
+echo "  docker exec $CONTAINER_NAME /command/s6-svc -d /run/service/gateway-$PROFILE_NAME (stop)"
 echo "======================================================================"
