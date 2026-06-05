@@ -117,18 +117,18 @@ update_env_var "GH_TOKEN" "$github_token"
 update_env_var "GH_CONFIG_DIR" "$DATA_DIR/.config/gh"
 echo_success "Saved GITHUB_TOKEN, GH_TOKEN, and GH_CONFIG_DIR to $ENV_FILE."
 
-# 6. Set Git config & gh Auth inside the running container if available
+# 6. Set Git config & gh Auth inside the running container or natively on host
 CONTAINER_NAME="hermes-custom"
 if is_container_running; then
   echo ""
   echo "Applying Git identity inside running container '$CONTAINER_NAME'..."
   docker exec -u hermes "$CONTAINER_NAME" git config --global user.name "$git_username"
   docker exec -u hermes "$CONTAINER_NAME" git config --global user.email "$git_email"
-  echo_success "Configured Git user.name and user.email."
+  echo_success "Configured Git user.name and user.email inside container."
 
   echo "Authenticating GitHub CLI (gh) in the container..."
   if echo "$github_token" | docker exec -i -u hermes "$CONTAINER_NAME" gh auth login --with-token; then
-    echo_success "GitHub CLI authenticated successfully."
+    echo_success "GitHub CLI authenticated successfully in container."
   else
     echo_warning "Failed to run 'gh auth login' inside the container."
   fi
@@ -136,20 +136,48 @@ if is_container_running; then
   # Fix: named profiles run with HOME=<profile_dir>, so gh looks for config there.
   # Symlink .config/gh inside the profile dir to the shared config location.
   if [ "$profile_name" != "default" ]; then
-    PROFILE_DIR="$(docker exec -u hermes "$CONTAINER_NAME" sh -c 'echo $HERMES_HOME' 2>/dev/null)"
     PROFILE_DIR="/opt/data/profiles/$profile_name"
     echo "Symlinking gh config into profile '$profile_name' so it works when HOME is set to the profile dir..."
     docker exec -u hermes "$CONTAINER_NAME" bash -c "\
       mkdir -p \"$PROFILE_DIR/.config\" && \
       ln -sfn /opt/data/.config/gh \"$PROFILE_DIR/.config/gh\" && \
       echo 'Symlink: $PROFILE_DIR/.config/gh -> /opt/data/.config/gh'"
-    echo_success "gh config symlinked for profile '$profile_name'."
+    echo_success "gh config symlinked for profile '$profile_name' in container."
   fi
 else
-  echo ""
-  echo_warning "Container '$CONTAINER_NAME' is not running."
-  echo "Identity configuration and 'gh' CLI authentication will apply once the container starts."
-  echo "Make sure to run: git config --global user.name \"$git_username\" and email inside the container."
+  # Native Ubuntu LTS fallback
+  if [ -f /etc/os-release ] && grep -q -i "ubuntu" /etc/os-release; then
+    echo ""
+    echo "🐧 Ubuntu LTS system detected natively (without Docker running)."
+    echo "Applying Git identity natively on host..."
+    git config --global user.name "$git_username"
+    git config --global user.email "$git_email"
+    echo_success "Configured Git user.name and user.email natively."
+
+    if command -v gh &>/dev/null; then
+      echo "Authenticating GitHub CLI (gh) natively on host..."
+      if echo "$github_token" | gh auth login --with-token; then
+        echo_success "GitHub CLI authenticated natively on host."
+      else
+        echo_warning "Failed to run 'gh auth login' natively on host."
+      fi
+    else
+      echo_warning "GitHub CLI (gh) is not installed natively on this host. Skipping CLI login."
+    fi
+
+    # Native symlink for named profiles
+    if [ "$profile_name" != "default" ]; then
+      PROFILE_DIR="$DATA_DIR/profiles/$profile_name"
+      echo "Symlinking gh config into native profile '$profile_name'..."
+      mkdir -p "$PROFILE_DIR/.config"
+      ln -sfn "$DATA_DIR/.config/gh" "$PROFILE_DIR/.config/gh"
+      echo_success "gh config symlinked for native profile '$profile_name'."
+    fi
+  else
+    echo ""
+    echo_warning "Container '$CONTAINER_NAME' is not running and native Ubuntu environment not detected."
+    echo "Identity configuration and 'gh' CLI authentication will apply once the container starts."
+  fi
 fi
 
 # 7. Configure SSH keys
