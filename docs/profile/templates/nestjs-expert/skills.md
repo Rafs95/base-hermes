@@ -1,6 +1,4 @@
-# 🛠️ nestjs-expert Skills Installer List
-
-This file contains the list of skills to install for the `nestjs-expert` profile. Each non-comment line is run as a CLI command inside the container.
+# This file contains the list of skills to install for the `nestjs-expert` profile. Each non-comment line is run as a CLI command inside the container.
 
 # NestJS Best Practices
 npx skills add https://github.com/kadajett/agent-nestjs-skills --skill nestjs-best-practices
