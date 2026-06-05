@@ -1,0 +1,34 @@
+services:
+  hermes:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hermes-custom:latest
+    container_name: hermes-custom
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8642:8642" # Gateway API
+      - "127.0.0.1:9119:9119" # Dashboard UI
+    volumes:
+      - ./data:/opt/data      # ONLY mount the persistent user data directory
+    environment:
+      - HERMES_UID=${HERMES_UID:-1000}
+      - HERMES_GID=${HERMES_GID:-1000}
+      
+      # Web Dashboard Configuration
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_HOST=0.0.0.0
+      - HERMES_DASHBOARD_PORT=9119
+      - HERMES_DASHBOARD_INSECURE=1
+      - GATEWAY_HEALTH_URL=http://127.0.0.1:8642
+      
+      # OpenAI-compatible API Server Key
+      - API_SERVER_ENABLED=true
+      - API_SERVER_HOST=0.0.0.0
+      - API_SERVER_KEY=${API_SERVER_KEY}
+
+      # Git Integration credentials
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GH_TOKEN=${GH_TOKEN}
+    command: ["gateway", "run"]
+

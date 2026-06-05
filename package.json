@@ -1,0 +1,26 @@
+{
+  "name": "base-hermes",
+  "version": "1.0.0",
+  "description": "Installer for NousResearch Hermes Agent custom base files",
+  "main": "bin/cli.js",
+  "bin": {
+    "base-hermes": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "docs",
+    "Dockerfile",
+    "docker-compose.yml",
+    "gateway_run.py",
+    "scheduler.py",
+    "setup-telegram.sh",
+    "telegram.py",
+    "web_server.py",
+    "README.md",
+    ".env.example"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "license": "MIT"
+}
