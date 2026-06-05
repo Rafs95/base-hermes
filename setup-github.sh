@@ -113,7 +113,9 @@ echo ""
 echo "Updating environment configuration..."
 update_env_var "GITHUB_TOKEN" "$github_token"
 update_env_var "GH_TOKEN" "$github_token"
-echo_success "Saved GITHUB_TOKEN and GH_TOKEN to $ENV_FILE."
+# Pin GH_CONFIG_DIR so gh works even when HOME is redirected to a named profile dir
+update_env_var "GH_CONFIG_DIR" "$DATA_DIR/.config/gh"
+echo_success "Saved GITHUB_TOKEN, GH_TOKEN, and GH_CONFIG_DIR to $ENV_FILE."
 
 # 6. Set Git config & gh Auth inside the running container if available
 CONTAINER_NAME="hermes-custom"
@@ -129,6 +131,19 @@ if is_container_running; then
     echo_success "GitHub CLI authenticated successfully."
   else
     echo_warning "Failed to run 'gh auth login' inside the container."
+  fi
+
+  # Fix: named profiles run with HOME=<profile_dir>, so gh looks for config there.
+  # Symlink .config/gh inside the profile dir to the shared config location.
+  if [ "$profile_name" != "default" ]; then
+    PROFILE_DIR="$(docker exec -u hermes "$CONTAINER_NAME" sh -c 'echo $HERMES_HOME' 2>/dev/null)"
+    PROFILE_DIR="/opt/data/profiles/$profile_name"
+    echo "Symlinking gh config into profile '$profile_name' so it works when HOME is set to the profile dir..."
+    docker exec -u hermes "$CONTAINER_NAME" bash -c "\
+      mkdir -p \"$PROFILE_DIR/.config\" && \
+      ln -sfn /opt/data/.config/gh \"$PROFILE_DIR/.config/gh\" && \
+      echo 'Symlink: $PROFILE_DIR/.config/gh -> /opt/data/.config/gh'"
+    echo_success "gh config symlinked for profile '$profile_name'."
   fi
 else
   echo ""
