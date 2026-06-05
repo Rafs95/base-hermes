@@ -118,11 +118,17 @@ update_env_var "TELEGRAM_HOME_CHANNEL_THREAD_ID" "$thread_id"
 update_env_var "TELEGRAM_CRON_THREAD_ID" "$thread_id"
 update_env_var "TELEGRAM_ALLOWED_TOPICS" "$allowed_topics"
 
+# Detect container name for display suggestion
+CONTAINER_NAME="hermes"
+if docker ps --format '{{.Names}}' | grep -q '^hermes-custom$'; then
+  CONTAINER_NAME="hermes-custom"
+fi
+
 echo_success "Telegram configuration updated successfully for profile '$profile_name'!"
 echo "Please restart your gateway service to apply the new settings:"
 if [ "$profile_name" = "default" ]; then
-  echo "  docker exec hermes /command/s6-svc -t /run/service/gateway-default"
+  echo "  docker exec $CONTAINER_NAME /command/s6-svc -t /run/service/gateway-default"
 else
-  echo "  docker exec hermes /command/s6-svc -t /run/service/gateway-$profile_name"
+  echo "  docker exec $CONTAINER_NAME /command/s6-svc -t /run/service/gateway-$profile_name"
 fi
-echo "======================================================================\n"
+echo -e "======================================================================\n"
