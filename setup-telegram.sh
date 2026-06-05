@@ -51,8 +51,10 @@ profile_name="${profile_name:-default}"
 # Resolve target .env file path
 if [ "$profile_name" = "default" ]; then
   ENV_FILE="$DATA_DIR/.env"
+  PROFILE_HOME_DIR="$DATA_DIR"
 else
   ENV_FILE="$DATA_DIR/profiles/$profile_name/.env"
+  PROFILE_HOME_DIR="$DATA_DIR/profiles/$profile_name"
 fi
 
 if [ ! -f "$ENV_FILE" ]; then
@@ -121,7 +123,7 @@ update_env_var "TELEGRAM_CRON_THREAD_ID" "$thread_id"
 update_env_var "TELEGRAM_ALLOWED_TOPICS" "$allowed_topics"
 update_env_var "API_SERVER_PORT" "$api_port"
 
-# Detect container name for display suggestion
+# Detect container name for service registration
 CONTAINER_NAME=""
 if docker ps --format '{{.Names}}' | grep -q '^hermes-custom$'; then
   CONTAINER_NAME="hermes-custom"
@@ -130,14 +132,115 @@ elif docker ps --format '{{.Names}}' | grep -q '^hermes$'; then
 fi
 
 echo_success "Telegram configuration updated successfully for profile '$profile_name'!"
-echo "Please restart your gateway service to apply the new settings:"
+
 if [ -n "$CONTAINER_NAME" ]; then
-  if [ "$profile_name" = "default" ]; then
-    echo "  docker exec $CONTAINER_NAME /command/s6-svc -t /run/service/gateway-default"
+  echo ""
+  echo "🔄 Registering supervised gateway-$profile_name service inside container '$CONTAINER_NAME'..."
+  # Reconcile s6 services (generates the service folder for the profile if it doesn't exist)
+  docker exec -i "$CONTAINER_NAME" python3 -m hermes_cli.container_boot
+  docker exec -i "$CONTAINER_NAME" /command/s6-svscanctl -a /run/service
+
+  # Give s6-svscan a moment to spawn the supervisor and open control FIFOs
+  sleep 2
+
+  echo "🚀 Starting/Restarting gateway-$profile_name service..."
+  # Check status, restart if running, start if not
+  if docker exec -i "$CONTAINER_NAME" /command/s6-svstat "/run/service/gateway-$profile_name" 2>/dev/null | grep -q -E "up|starting"; then
+    docker exec -i "$CONTAINER_NAME" /command/s6-svc -t "/run/service/gateway-$profile_name"
+    echo_success "Gateway service 'gateway-$profile_name' restarted successfully!"
   else
-    echo "  docker exec $CONTAINER_NAME /command/s6-svc -t /run/service/gateway-$profile_name"
+    docker exec -i "$CONTAINER_NAME" /command/s6-svc -u "/run/service/gateway-$profile_name"
+    echo_success "Gateway service 'gateway-$profile_name' started successfully!"
+  fi
+
+  echo ""
+  echo "To check the status of your gateway service, use:"
+  echo "  docker exec $CONTAINER_NAME /command/s6-svstat /run/service/gateway-$profile_name"
+  echo "To view service logs, check:"
+  if [ "$profile_name" = "default" ]; then
+    echo "  tail -f data/logs/agent.log"
+  else
+    echo "  tail -f data/profiles/$profile_name/logs/agent.log"
   fi
 else
-  echo "  hermes -p $profile_name gateway restart"
+  # Check if we are running natively on Ubuntu LTS (or standard systemd system)
+  if [ -f /etc/os-release ] && grep -q -i "ubuntu" /etc/os-release; then
+    echo ""
+    echo "🐧 Ubuntu LTS system detected natively (without Docker running)."
+    read -r -p "Would you like to automatically configure and start this bot as a native systemd service? (requires sudo) [y/N]: " register_systemd
+    register_systemd="${register_systemd:-n}"
+
+    if [[ "$register_systemd" =~ ^[Yy]$ ]]; then
+      SERVICE_NAME="hermes-gateway-$profile_name"
+      SERVICE_FILE_TEMP="/tmp/$SERVICE_NAME.service"
+
+      # Detect Python interpreter path
+      PYTHON_PATH="$WORKSPACE_ROOT/.venv/bin/python3"
+      if [ ! -f "$PYTHON_PATH" ]; then
+        PYTHON_PATH="$(which python3)"
+      fi
+
+      # Detect hermes launcher binary/script
+      HERMES_EXEC="$WORKSPACE_ROOT/.venv/bin/hermes"
+      if [ ! -f "$HERMES_EXEC" ]; then
+        HERMES_EXEC="$WORKSPACE_ROOT/bin/hermes"
+      fi
+
+      if [ ! -f "$HERMES_EXEC" ]; then
+        # Fallback to run.py directly if the hermes binary wrapper is missing
+        EXEC_COMMAND="$PYTHON_PATH $WORKSPACE_ROOT/gateway_run.py"
+      else
+        EXEC_COMMAND="$HERMES_EXEC -p $profile_name gateway run"
+      fi
+
+      cat <<EOF > "$SERVICE_FILE_TEMP"
+[Unit]
+Description=Hermes Gateway Service - $profile_name
+After=network.target
+
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=$WORKSPACE_ROOT
+Environment=HERMES_HOME=$PROFILE_HOME_DIR
+ExecStart=$EXEC_COMMAND
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+      echo "Installing systemd service unit file..."
+      sudo cp "$SERVICE_FILE_TEMP" "/etc/systemd/system/$SERVICE_NAME.service"
+      rm -f "$SERVICE_FILE_TEMP"
+
+      echo "Reloading systemd daemon..."
+      sudo systemctl daemon-reload
+
+      echo "Enabling service to start on boot..."
+      sudo systemctl enable "$SERVICE_NAME.service"
+
+      echo "Starting service..."
+      sudo systemctl restart "$SERVICE_NAME.service"
+
+      echo_success "Systemd service '$SERVICE_NAME' registered and started successfully!"
+      echo ""
+      echo "Commands to manage your native service:"
+      echo "  Check Status:  sudo systemctl status $SERVICE_NAME"
+      echo "  View Logs:    sudo journalctl -u $SERVICE_NAME -f"
+      echo "  Restart Bot:   sudo systemctl restart $SERVICE_NAME"
+      echo "  Stop Bot:      sudo systemctl stop $SERVICE_NAME"
+    else
+      echo "Skipped native systemd service configuration."
+    fi
+  else
+    echo ""
+    echo_warning "Docker container is not running, and native Ubuntu systemd environment not detected."
+    echo "Please start the docker container, or manually configure systemd if running on a non-Ubuntu systemd system."
+  fi
 fi
 echo -e "======================================================================\n"
+
