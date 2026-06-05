@@ -58,6 +58,10 @@ fi
 echo "⚙️ Registering profile in Hermes..."
 docker exec -i "$CONTAINER_NAME" hermes profile install "/opt/data/tmp_${PROFILE_NAME}_dist" --name "$PROFILE_NAME" --force -y
 
+# Opt out of default bundled skills so only the custom profile skills are installed
+echo "🚫 Opting out of default bundled skills..."
+docker exec -i "$CONTAINER_NAME" hermes -p "$PROFILE_NAME" skills opt-out --remove -y
+
 # 4. Clean up staging
 echo "🧹 Cleaning up temporary staging directory..."
 rm -rf "$STAGING_DIR"
