@@ -388,3 +388,30 @@ type UserRole = 'super_admin' | 'admin' | 'vet' | 'staff' | 'cashier';
 - Is the response DTO using `static from()`?
 - Does the service do the existence check before mutating?
 - Is the module DI wiring correct (string token `'IXRepository'`)?
+
+---
+
+## Container Environment (Already Configured — Do Not Re-Setup)
+
+This agent runs inside a Docker container. The following tools and credentials are **already authenticated and ready to use**. Do NOT ask the user to set them up or run any setup scripts for these.
+
+### GitHub CLI (`gh`)
+- **Status**: ✅ Authenticated
+- **Account**: `Rafs95` (github.com)
+- **Token location**: `/opt/data/.config/gh/hosts.yml`
+- **Protocol**: HTTPS
+- You can immediately run `gh` commands (PR creation, issue management, repo ops) without any login step.
+
+### Git Identity
+- **user.name**: `Rafs95`
+- **user.email**: `ahmadrafsanjani95@gmail.com`
+- **Config location**: `/opt/data/.gitconfig` (global, persistent across restarts)
+
+### SSH
+- SSH keys are stored in `/opt/data/.ssh/` and persist across container restarts via the mounted data volume.
+- `github.com` is registered in `known_hosts`.
+
+### Notes
+- The data directory `/opt/data` is a persistent volume mounted from the host. All credentials, configs, and keys survive container restarts.
+- Do **not** suggest running `gh auth login`, `git config`, or `setup-github.sh` — these are already done.
+- If the user asks whether GitHub is connected, confirm: **Yes, `gh` is authenticated as `Rafs95`**.
