@@ -68,13 +68,13 @@ function copyRecursiveSync(src, dest, force = false) {
     fs.copyFileSync(src, dest);
     log(`✅ Copied: ${path.relative(process.cwd(), dest)}`, colors.green);
     
-    // If it's setup-telegram.sh, make sure it has execute permissions
-    if (src.endsWith('setup-telegram.sh') || dest.endsWith('setup-telegram.sh')) {
+    // If it's a shell script, make sure it has execute permissions
+    if (src.endsWith('.sh') || dest.endsWith('.sh')) {
       try {
-        fs.chmodSync(dest, '755');
-        log(`📂 Set executable permissions (chmod +x) on setup-telegram.sh`, colors.cyan);
+        fs.chmodSync(dest, 0o755);
+        log(`📂 Set executable permissions (chmod +x) on ${path.basename(dest)}`, colors.cyan);
       } catch (err) {
-        log(`⚠️  Failed to set executable permissions on setup-telegram.sh: ${err.message}`, colors.yellow);
+        log(`⚠️  Failed to set executable permissions on ${path.basename(dest)}: ${err.message}`, colors.yellow);
       }
     }
   }
