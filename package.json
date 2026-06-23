@@ -15,6 +15,7 @@
     "scheduler.py",
     "setup-telegram.sh",
     "setup-discord.sh",
+    "setup-github.sh",
     "telegram.py",
     "web_server.py",
     "README.md",

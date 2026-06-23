@@ -130,6 +130,8 @@ function main() {
       'docker-compose.yml',
       '.env.example',
       'setup-telegram.sh',
+      'setup-discord.sh',
+      'setup-github.sh',
       'gateway_run.py',
       'scheduler.py',
       'telegram.py',
@@ -150,9 +152,9 @@ function main() {
     
     const relativeTarget = path.relative(process.cwd(), targetDir);
     if (relativeTarget) {
-      log(`👉 Next steps:\n   1. cd ${relativeTarget}\n   2. Configure your environment variables (.env)\n   3. Run setup-telegram.sh\n   4. Start services using 'docker compose up -d'`, colors.bright);
+      log(`👉 Next steps:\n   1. cd ${relativeTarget}\n   2. Configure your environment variables (.env)\n   3. Run setup-telegram.sh, setup-discord.sh, or setup-github.sh\n   4. Start services using 'docker compose up -d'`, colors.bright);
     } else {
-      log(`👉 Next steps:\n   1. Configure your environment variables (.env)\n   2. Run setup-telegram.sh\n   3. Start services using 'docker compose up -d'`, colors.bright);
+      log(`👉 Next steps:\n   1. Configure your environment variables (.env)\n   2. Run setup-telegram.sh, setup-discord.sh, or setup-github.sh\n   4. Start services using 'docker compose up -d'`, colors.bright);
     }
   } catch (err) {
     log(`\n❌ Error during installation: ${err.message}`, colors.red);
