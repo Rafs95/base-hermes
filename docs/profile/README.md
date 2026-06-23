@@ -11,8 +11,7 @@ Each profile is stored as a template inside `docs/profile/templates/{profile_nam
 ```text
 docs/profile/templates/{profile_name}/
 ├── SOUL.md        # The agent's core instructions and personality prompt.
-├── skills.md      # A markdown list of skills to install for this profile.
-└── install.sh     # Bash script to automate staging and installation.
+└── skills.md      # A markdown list of skills to install for this profile.
 ```
 
 ---
@@ -26,18 +25,22 @@ docs/profile/templates/{profile_name}/
 
 ## 🚀 How to Install a Profile
 
-To install a profile, run its accompanying `install.sh` script from the host command line.
+To install a profile, run the general `install.sh` script from the host command line, passing the profile name as an argument.
 
-### Option A: Direct Installation
-Run the installer directly from the template folder:
+### Usage
 ```bash
-./docs/profile/templates/nestjs-expert/install.sh
+./docs/profile/install.sh <profile_name>
 ```
 
-### Option B: Automatic Global Resolution
-If you are running the script from the root repository, it resolves directories automatically:
+### Examples
+To install `nestjs-expert`:
 ```bash
-bash docs/profile/templates/nestjs-expert/install.sh
+./docs/profile/install.sh nestjs-expert
+```
+
+To install `urvets-api`:
+```bash
+./docs/profile/install.sh urvets-api
 ```
 
 ---
@@ -73,4 +76,5 @@ To create a new custom profile template:
 1. Create a new directory under `docs/profile/templates/{new-profile-name}/`.
 2. Create your `SOUL.md` detailing the agent instructions.
 3. Create your `skills.md` containing `npx skills add` commands (one command per line).
-4. Copy the `install.sh` from the `nestjs-expert` template and change `PROFILE_NAME="nestjs-expert"` to your new profile name at the top of the script.
+
+*(Note: No `install.sh` is needed for individual templates! The installer is fully generalized.)*

@@ -9,7 +9,7 @@ This guide documents the Docker architecture and setup for the customized **Nous
 Hermes runs inside a Docker container based on the official `nousresearch/hermes-agent` image, customized with system packages and Python overrides.
 
 ### Directory Structure for Docker
-* **`installer/Dockerfile`**: The main blueprint for the custom image. Installs system tools (like `gh` CLI) and bakes the custom Python script overrides (`telegram.py`, `gateway_run.py`, etc.) directly into the image.
+* **`Dockerfile`**: The main blueprint for the custom image. Installs system tools (like `gh` CLI) and bakes the custom Python script overrides (`telegram.py`, `gateway_run.py`, etc.) directly into the image.
 * **`data/` (Volume)**: Contains all runtime files, history database (`state.db`), active session keys, profiles, and skills. This folder is mounted externally to prevent data loss when updating the container.
 * **`docker-compose.yml`**: Simplifies the orchestration of the gateway and dashboard UI services.
 
@@ -17,25 +17,18 @@ Hermes runs inside a Docker container based on the official `nousresearch/hermes
 
 ## 🛠️ Image Build and Execution Options
 
-### Option A: Root Development Compose (For local code changes)
-Ideal for modifying the python scripts. Uses the root `docker-compose.yml` to build from `installer/Dockerfile` and mount the local scripts (`telegram.py`, `gateway_run.py`, etc.) inside the container:
+### Option A: Standard Compose Run (Recommended)
+Ideal for development or production deployment. Runs directly from the root of your project directory using the pre-configured `docker-compose.yml`:
 ```bash
-docker compose up --build -d
-```
-
-### Option B: Standalone Installer Compose (Recommended for Standalone Deployments)
-Ideal for spawning a clean instance with baked-in custom scripts. Runs directly from the `installer/` directory using the pre-configured `installer/docker-compose.yml`:
-```bash
-cd installer/
 cp .env.example .env
 docker compose up --build -d
 ```
 
-### Option C: Standalone Docker CLI Run
+### Option B: Standalone Docker CLI Run
 If you prefer running a single standalone container without using Docker Compose:
 ```bash
-# Build the image using the installer directory
-docker build -t hermes-custom:latest installer/
+# Build the image from your project root
+docker build -t hermes-custom:latest .
 
 # Run the container (mounting only the persistent data folder)
 docker run -d \

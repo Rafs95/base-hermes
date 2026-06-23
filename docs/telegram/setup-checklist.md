@@ -33,13 +33,13 @@ Follow these exact steps chronologically to set up and run multiple Telegram bot
 - [ ] **Step 7: Configure Bot A (Default)**
   * Run the interactive setup script:
     ```bash
-    ./installer/setup-telegram.sh
+    ./setup-telegram.sh
     ```
   * Select `default` as the profile name and enter Token A and Thread ID `1`.
 - [ ] **Step 8: Configure Bot B (UrVets API)**
   * Run the interactive setup script again:
     ```bash
-    ./installer/setup-telegram.sh
+    ./setup-telegram.sh
     ```
   * Select `urvets-api` as the profile name and enter Token B and Thread ID `2`.
 

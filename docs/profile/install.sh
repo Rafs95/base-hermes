@@ -1,20 +1,46 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Installer for Hermes urvets-api Profile
+# General Installer for Hermes Profile Templates
 # ==============================================================================
 set -euo pipefail
 
-PROFILE_NAME="urvets-api"
-
 # Resolve directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Check if run from workspace root or inside the templates folder
-if [[ "$SCRIPT_DIR" == *"/docs/profile/templates/urvets-api" ]]; then
-  WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../../../" && pwd)"
-  PROFILE_SRC="$SCRIPT_DIR"
-else
-  WORKSPACE_ROOT="$SCRIPT_DIR"
-  PROFILE_SRC="$WORKSPACE_ROOT/docs/profile/templates/$PROFILE_NAME"
+WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../" && pwd)"
+
+# Function to list available templates
+list_templates() {
+  echo "Available templates:"
+  if [ -d "$WORKSPACE_ROOT/docs/profile/templates" ]; then
+    for dir in "$WORKSPACE_ROOT/docs/profile/templates"/*/; do
+      if [ -d "$dir" ]; then
+        echo "  - $(basename "$dir")"
+      fi
+    done
+  else
+    echo "  (No templates directory found)"
+  fi
+}
+
+# Check if profile name is provided
+if [ $# -lt 1 ] || [ -z "$1" ]; then
+  echo "❌ Error: Missing profile name."
+  echo "Usage: $0 <profile_name>"
+  echo ""
+  list_templates
+  exit 1
+fi
+
+PROFILE_NAME="$1"
+PROFILE_SRC="$WORKSPACE_ROOT/docs/profile/templates/$PROFILE_NAME"
+
+# Check if the template exists
+if [ ! -d "$PROFILE_SRC" ]; then
+  echo "❌ Error: Profile template '$PROFILE_NAME' not found."
+  echo "Expected path: docs/profile/templates/$PROFILE_NAME"
+  echo ""
+  list_templates
+  exit 1
 fi
 
 DATA_DIR="$WORKSPACE_ROOT/data"
@@ -139,4 +165,3 @@ echo "✅ Profile '$PROFILE_NAME' files and skills installed successfully!"
 echo "======================================================================"
 echo "Next step: Run setup-telegram.sh to configure the bot token and start the gateway."
 echo "======================================================================"
-

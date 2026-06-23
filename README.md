@@ -30,14 +30,14 @@ Alternatively, you can link the package globally to run it from anywhere:
 ### Option 3: Direct Git/GitHub Execution
 Once this repository is pushed to GitHub or another git server, you can execute it directly from the remote repository without having it cloned locally:
 ```bash
-npx github:<username>/<repo-name> install
+npx github:Rafs95/base-hermes install
 ```
 or via the full Git URL:
 ```bash
-npx https://github.com/<username>/<repo-name>.git install
+npx https://github.com/Rafs95/base-hermes.git install
 ```
 
-By default, this will copy the installer files to a local `installer/` directory. If you wish to overwrite existing files, add the `--force` (or `-f`) flag.
+By default, this will copy the installer files directly to your current working directory (the root of your project). If you wish to copy files to a custom directory instead, use the `--dir` (or `-d`) flag (e.g. `--dir installer`). If you wish to overwrite existing files, add the `--force` (or `-f`) flag.
 
 ---
 
@@ -59,7 +59,7 @@ The installer copies the following custom code overrides directly into the conta
 To build the self-contained Docker image, run the following command from the **root of the repository**:
 
 ```bash
-docker build -t hermes-custom:latest installer/
+docker build -t hermes-custom:latest .
 ```
 
 ---
@@ -69,14 +69,14 @@ docker build -t hermes-custom:latest installer/
 ### 1. Configure Environment
 Before deploying, copy the example environment file:
 ```bash
-cp installer/.env.example .env
+cp .env.example .env
 ```
 Open the `.env` file and specify your keys and preferences (e.g. `API_SERVER_KEY`, LLM provider keys, etc.).
 
 ### 2. Configure Telegram (Interactive Setup)
 To configure your Telegram bots and topic thread mappings using the interactive Q&A wizard, run:
 ```bash
-./installer/setup-telegram.sh
+./setup-telegram.sh
 ```
 This wizard will ask which profile you are configuring (e.g. `default` or `urvets-api`), prompt you for the bot token, allowed users, and thread IDs, and automatically update the correct profile-specific `.env` file inside your `data/` directory.
 
@@ -112,24 +112,20 @@ docker run -d \
 
 ## ⚙️ Standalone Docker Compose Setup
 
-A fully configured `docker-compose.yml` is already provided inside the `installer/` directory. This allows you to launch the environment with a single command:
+A fully configured `docker-compose.yml` is already provided. This allows you to launch the environment with a single command:
 
-1. **Change directory to `installer/`**:
-   ```bash
-   cd installer/
-   ```
-2. **Set up the environment file**:
+1. **Set up the environment file**:
    ```bash
    cp .env.example .env
    ```
-3. **Configure your secrets**:
+2. **Configure your secrets**:
    Open the `.env` file and set your `API_SERVER_KEY`, LLM provider credentials, and Telegram bot settings.
-4. **Launch the stack**:
+3. **Launch the stack**:
    ```bash
    docker compose up -d --build
    ```
 
-This will build the custom Docker image, mount the persistent `./data` folder locally under `installer/data/`, load all environment configurations, and start the Hermes gateway and dashboard.
+This will build the custom Docker image, mount the persistent `./data` folder locally under your project root, load all environment configurations, and start the Hermes gateway and dashboard.
 
 ---
 
