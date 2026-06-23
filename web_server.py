@@ -9,6 +9,32 @@ Usage:
     python -m hermes_cli.main web --port 8080
 """
 
+# --- HTTPX User-Agent Monkeypatch to bypass Cloudflare WAF on 9Router ---
+try:
+    import httpx
+    _orig_send = httpx.Client.send
+    _orig_async_send = httpx.AsyncClient.send
+
+    def _patched_send(self, request, *args, **kwargs):
+        if "user-agent" in request.headers:
+            ua = request.headers["user-agent"]
+            if "OpenAI" in ua or "httpx" in ua:
+                request.headers["user-agent"] = "python-requests/2.31.0"
+        return _orig_send(self, request, *args, **kwargs)
+
+    async def _patched_async_send(self, request, *args, **kwargs):
+        if "user-agent" in request.headers:
+            ua = request.headers["user-agent"]
+            if "OpenAI" in ua or "httpx" in ua:
+                request.headers["user-agent"] = "python-requests/2.31.0"
+        return await _orig_async_send(self, request, *args, **kwargs)
+
+    httpx.Client.send = _patched_send
+    httpx.AsyncClient.send = _patched_async_send
+except Exception:
+    pass
+# ------------------------------------------------------------------------
+
 from contextlib import asynccontextmanager
 
 import asyncio
@@ -5256,6 +5282,14 @@ async def list_mcp_catalog():
                 "needs_install": entry.install is not None,
                 "installed": mcp_catalog.is_installed(entry.name),
                 "enabled": mcp_catalog.is_enabled(entry.name),
+                "command": getattr(entry.transport, "command", None),
+                "args": list(getattr(entry.transport, "args", []) or []),
+                "url": getattr(entry.transport, "url", None),
+                "install_url": getattr(entry.install, "url", None) if entry.install else None,
+                "install_ref": getattr(entry.install, "ref", None) if entry.install else None,
+                "bootstrap": list(getattr(entry.install, "bootstrap", []) or []) if entry.install else [],
+                "default_enabled": getattr(entry.tools, "default_enabled", None) if entry.tools else None,
+                "post_install": entry.post_install or "",
             })
     except Exception:
         _log.exception("list_mcp_catalog failed")
@@ -8611,7 +8645,9 @@ def start_server(
     open_browser: bool = True,
     allow_public: bool = False,
     *,
-    embedded_chat: bool = False,
+    embedded_chat: bool = True,
+    initial_profile: str = "",
+    **kwargs,
 ):
     """Start the web UI server."""
     import uvicorn
@@ -8729,6 +8765,6 @@ def start_server(
     # (Fly.io) and need X-Forwarded-Proto to decide cookie Secure flags, so
     # we flip proxy_headers on for that mode.
     uvicorn.run(
-        app, host=host, port=port, log_level="warning",
+        app, host=host, port=port, log_level="info",
         proxy_headers=bool(app.state.auth_required),
     )

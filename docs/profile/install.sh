@@ -80,12 +80,9 @@ if [ "$IS_NATIVE" = "false" ]; then
 
   # 2. Stage files (Docker)
   echo "📦 Staging profile files to the container volume..."
-  rm -rf "$STAGING_DIR"
-  mkdir -p "$STAGING_DIR"
-  cp -r "$PROFILE_SRC/"* "$STAGING_DIR/"
-  if [ -d "$PROFILE_SRC/.agents" ]; then
-    cp -r "$PROFILE_SRC/.agents" "$STAGING_DIR/"
-  fi
+  docker exec -i "$CONTAINER_NAME" rm -rf "/opt/data/tmp_${PROFILE_NAME}_dist"
+  docker exec -i "$CONTAINER_NAME" mkdir -p "/opt/data/tmp_${PROFILE_NAME}_dist"
+  docker cp "$PROFILE_SRC/." "$CONTAINER_NAME:/opt/data/tmp_${PROFILE_NAME}_dist/"
 
   # 3. Install profile in container (Docker)
   echo "⚙️ Registering profile in Hermes..."
@@ -97,7 +94,7 @@ if [ "$IS_NATIVE" = "false" ]; then
 
   # 4. Clean up staging (Docker)
   echo "🧹 Cleaning up temporary staging directory..."
-  rm -rf "$STAGING_DIR"
+  docker exec -i "$CONTAINER_NAME" rm -rf "/opt/data/tmp_${PROFILE_NAME}_dist"
 else
   # Native Ubuntu LTS Installation
   echo "⚙️ Registering profile in native Hermes..."
@@ -131,20 +128,28 @@ if [ -f "$SKILLS_FILE" ]; then
     [[ "$line" =~ ^[[:space:]]*# ]] && continue
     [[ -z "${line// }" ]] && continue
     
-    # Ensure command has -y flag
-    if [[ "$line" != *"-y"* ]]; then
-      cmd="$line -y"
-    else
-      cmd="$line"
+    # Always append --yes to the command to bypass skills prompts
+    cmd="$line --yes"
+    
+    # Ensure npx uses the -y flag to bypass package installation prompts
+    if [[ "$cmd" =~ ^npx[[:space:]]+skills ]]; then
+      cmd="npx -y ${cmd#npx }"
     fi
     
     echo "Running: $cmd"
+    set +e
     if [ "$IS_NATIVE" = "false" ]; then
       # Execute inside container
       docker exec -w "/opt/data/profiles/$PROFILE_NAME" "$CONTAINER_NAME" $cmd
+      status=$?
     else
       # Execute natively
       (cd "$DATA_DIR/profiles/$PROFILE_NAME" && eval "$cmd")
+      status=$?
+    fi
+    set -e
+    if [ $status -ne 0 ]; then
+      echo "⚠️ Warning: Failed to install skill via command: $cmd (exited with status $status). Continuing..."
     fi
   done < "$SKILLS_FILE"
   
