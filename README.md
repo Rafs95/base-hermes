@@ -131,14 +131,13 @@ This will build the custom Docker image, mount the persistent `./data` folder lo
 
 ## 🤖 Running Multiple Telegram Bots with Group Topics
 
-Hermes supports running **multiple concurrent profiles** (e.g. `default` and `urvets-api`) under the same container. If you want to use a separate Telegram bot for each profile while keeping them in the same group chat, you can segregate their responses using **Telegram Group Topics (Forum Threads)**.
+Hermes supports running **multiple concurrent profiles** (e.g. `default` and `programmer-expert`) under the same container. If you want to use a separate Telegram bot for each profile while keeping them in the same group chat, you can segregate their responses using **Telegram Group Topics (Forum Threads)**.
 
 ### How it Works
 1. Each profile runs its own background gateway process inside the container.
 2. Rather than reading the top-level container variables, each profile loads configuration from its profile-specific `.env` file inside the mounted `data` folder:
    - Default Profile: `data/.env`
-   - UrVets API Profile: `data/profiles/urvets-api/.env`
-   - NestJS Expert Profile: `data/profiles/nestjs-expert/.env`
+   - Programmer Expert Profile: `data/profiles/programmer-expert/.env`
 
 ### Example Configuration
 
@@ -155,12 +154,12 @@ TELEGRAM_CRON_THREAD_ID=1
 TELEGRAM_ALLOWED_TOPICS=1
 ```
 
-#### 2. UrVets API Profile (`data/profiles/urvets-api/.env`)
+#### 2. Programmer Expert Profile (`data/profiles/programmer-expert/.env`)
 ```ini
 TELEGRAM_BOT_TOKEN=8904380117:AAHpzCRz3...
 TELEGRAM_ALLOWED_USERS=5214495119
 TELEGRAM_HOME_CHANNEL=-1003956980090
-TELEGRAM_HOME_CHANNEL_NAME=UrVets-API
+TELEGRAM_HOME_CHANNEL_NAME=Programmer-Expert
 TELEGRAM_HOME_CHANNEL_THREAD_ID=2
 TELEGRAM_CRON_THREAD_ID=2
 TELEGRAM_ALLOWED_TOPICS=2

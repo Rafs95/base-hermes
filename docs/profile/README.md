@@ -18,8 +18,7 @@ docs/profile/templates/{profile_name}/
 
 ## 📁 Available Templates
 
-* **`nestjs-expert`**: A generic NestJS senior developer persona, focusing on standard modules, DI best practices, DTO mapping, and testing.
-* **`urvets-api`**: A project-specific developer persona tailored for the `urvets-api` veterinary management backend (incorporating multi-tenant scoping, custom JWT Auth Guard logic, and database schemas).
+* **`programmer-expert`**: A general-purpose polyglot software engineering persona, focusing on software design principles, testing, clean code, and refactoring.
 
 ---
 
@@ -33,14 +32,9 @@ To install a profile, run the general `install.sh` script from the host command 
 ```
 
 ### Examples
-To install `nestjs-expert`:
+To install `programmer-expert`:
 ```bash
-./docs/profile/install.sh nestjs-expert
-```
-
-To install `urvets-api`:
-```bash
-./docs/profile/install.sh urvets-api
+./docs/profile/install.sh programmer-expert
 ```
 
 ---
@@ -63,9 +57,9 @@ Once installed, you can tell the Hermes CLI to use this profile:
 docker exec -it hermes hermes profile use {profile_name}
 ```
 
-Example for NestJS Expert:
+Example for Programmer Expert:
 ```bash
-docker exec -it hermes hermes profile use nestjs-expert
+docker exec -it hermes hermes profile use programmer-expert
 ```
 
 ---
