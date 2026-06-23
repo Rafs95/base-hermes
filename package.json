@@ -14,6 +14,7 @@
     "gateway_run.py",
     "scheduler.py",
     "setup-telegram.sh",
+    "setup-discord.sh",
     "telegram.py",
     "web_server.py",
     "README.md",

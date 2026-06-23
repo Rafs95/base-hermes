@@ -80,6 +80,13 @@ To configure your Telegram bots and topic thread mappings using the interactive 
 ```
 This wizard will ask which profile you are configuring (e.g. `default` or `urvets-api`), prompt you for the bot token, allowed users, and thread IDs, and automatically update the correct profile-specific `.env` file inside your `data/` directory.
 
+### 3. Configure Discord (Interactive Setup)
+To configure your Discord bots and channel mappings using the interactive Q&A wizard, run:
+```bash
+./setup-discord.sh
+```
+This wizard will ask which profile you are configuring (e.g. `default` or `urvets-api`), prompt you for the Discord bot token, allowed users, channel ID, and thread ID, and automatically update the correct profile-specific `.env` file inside your `data/` directory.
+
 ### 3. Persistent Data Mount
 Although the custom code is baked directly into the image, your sessions, credentials, memories, and databases must persist across container updates. Always mount the `./data` directory.
 
@@ -172,6 +179,38 @@ TELEGRAM_ALLOWED_TOPICS=2
 
 ---
 
+## 🤖 Running Multiple Discord Bots with Channel/Thread Routing
+
+Hermes supports running **multiple concurrent profiles** (e.g. `default` and `programmer-expert`) under the same container. If you want to use a separate Discord bot for each profile, you can route them to different channels or threads.
+
+### Example Configuration
+
+To configure this, set up each profile's `.env` file with its own bot token and channel routing parameters.
+
+#### 1. Default Profile (`data/.env`)
+```ini
+DISCORD_BOT_TOKEN=MTEyMjMzNDQ1NTY2Nzc4ODk5...
+DISCORD_ALLOWED_USERS=5214495119
+DISCORD_HOME_CHANNEL=112233445566778899
+DISCORD_HOME_CHANNEL_NAME=General
+DISCORD_REPLY_TO_MODE=first
+```
+
+#### 2. Programmer Expert Profile (`data/profiles/programmer-expert/.env`)
+```ini
+DISCORD_BOT_TOKEN=OTk4ODc3NjY1NTQ0MzMyMjEx...
+DISCORD_ALLOWED_USERS=5214495119
+DISCORD_HOME_CHANNEL=998877665544332211
+DISCORD_HOME_CHANNEL_NAME=Programmer-Expert
+DISCORD_REPLY_TO_MODE=first
+```
+
+> [!IMPORTANT]
+> - **Channel Permissions**: Ensure that each Discord Bot's role/permissions are restricted so it can only view and read/send messages in its designated channel. This prevents cross-talk and ensures bots do not double-reply.
+> - **`DISCORD_HOME_CHANNEL`**: Specifies the primary channel where the bot operates and prints active session or status updates.
+
+---
+
 ## 📖 Comprehensive Guides
 
 For deep-dives into topic routing and multi-bot configurations, refer to the guides included in this installer's `docs/` folder:
@@ -181,3 +220,6 @@ For deep-dives into topic routing and multi-bot configurations, refer to the gui
 * **[Setup Steps Checklist](docs/telegram/setup-checklist.md)**: End-to-end chronological checklist from Bot creation to topic mapping.
 * **[Profile-to-Topic Mapping Guide](docs/telegram/telegram-topic-routing.md)**: Detailed step-by-step setup to map profiles to specific forum topics.
 * **[Multi-Instance Gateway Guide](docs/telegram/telegram-multi-instance.md)**: Deep-dive into process supervision, locking, isolation, and service command utilities.
+* **[Discord Setup Steps Checklist](docs/discord/setup-checklist.md)**: End-to-end chronological checklist from Discord application creation to bot integration.
+* **[Discord Profile-to-Channel Mapping Guide](docs/discord/discord-channel-routing.md)**: Detailed step-by-step setup to map profiles to specific Discord channels.
+* **[Discord Multi-Instance Gateway Guide](docs/discord/discord-multi-instance.md)**: Deep-dive into Discord process supervision, locking, and service command utilities.
